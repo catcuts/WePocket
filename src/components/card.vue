@@ -1,19 +1,29 @@
 <template>
-  <div>
-    <p class="card">
-      {{text}}
+  <div class="__card_wrapper"
+      :class="wrapperClass"
+      :style="wrapperStyle">
+    <p>
+        {{ cardData.text }}
     </p>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['text']
+  props: [
+    "wrapperClass",
+    "wrapperStyle",
+    "cardMeta",
+    "cardData",
+  ],
+  created () {
+    console.log("card created !")
+  },
 }
 </script>
 
-<style>
-.card {
+<style scoped>
+.__card_wrapper {
   padding: 10px;
 }
 </style>
