@@ -21,6 +21,8 @@
 <script>
 import card from '@/components/card'
 
+var windowWidth = wx.getSystemInfoSync().windowWidth
+
 export default {
   components: {
     card,
@@ -38,8 +40,8 @@ export default {
       shortTouched: false,
       tapLock: false,
       touchmoveZero: null,
-      touchmoveOffset: null,
-      touchmoveOffsetLast: null,
+      touchmoveStart: null,
+      touchmoveDist: 0,
       currentCardIndex: 0,
     }
   },
@@ -59,24 +61,7 @@ export default {
     },
     __wrapperStyle () {
       var width = 100 * this.meta.cards.length
-      // var left = this.currentCardIndex === 0 ? 
-      //   (this.touchmoveOffset < 0 ?
-      //     this.touchmoveOffset : 0
-      //   ) 
-      //   : 
-      //   (this.currentCardIndex < this.meta.cards.length - 1 ?
-      //     this.touchmoveOffset : 100 * (this.meta.cards.length - 1)
-      //   )
-      var left = 0
-      if (
-          (this.currentCardIndex > 0) && 
-          (this.currentCardIndex < this.meta.cards.length - 1)
-        ) {
-        left = this.touchmoveOffset
-        this.touchmoveOffsetLast = left
-      } else {
-        left = this.touchmoveOffsetLast
-      }
+      var left = this.touchmoveDist
       return `width: ${width}vw;\
               left: ${left}px;`
     },
@@ -88,7 +73,7 @@ export default {
     onTouchstart ($event) {
       console.log("touch starts")
       this.tapLock = false
-      this.touchmoveZero = $event.clientX
+      this.touchmoveZero = this.touchmoveStart = $event.clientX
       this.touchTimeout = setTimeout(() => {
         this.shortTouched = true
         this.tapLock = true
@@ -102,6 +87,9 @@ export default {
     onTouchend ($event) {
       console.log("touch ends")
       clearTimeout(this.touchTimeout)
+      if (this.shortTouched) {
+        this.touchmoveDist = - this.currentCardIndex * windowWidth
+      }
     },
     onTap ($event) {
       console.log("tapped")
@@ -110,12 +98,25 @@ export default {
       }
     },
     onTouchmove ($event) {
-      // console.log("touch moving:", $event)
       clearTimeout(this.touchTimeout)
-      this.touchmoveOffset = $event.clientX - this.touchmoveZero
-      this.touchmoveZero = $event.clientX
-      this.currentCardIndex += Math.round(2 * this.touchmoveOffset / wx.getSystemInfoSync().windowWidth)
-      console.log("touch moving:", this.currentCardIndex)
+      var offsetZero = $event.clientX - this.touchmoveZero
+      var offsetStart = $event.clientX - this.touchmoveStart
+      if (this.shortTouched && (offsetZero !== 0)) {
+        var direct = Math.floor(Math.abs(offsetZero) / offsetZero)
+
+        this.touchmoveDist += offsetZero
+
+        this.currentCardIndex -= direct * Math.round(Math.abs(offsetStart) / windowWidth)
+        this.currentCardIndex = Math.min(Math.max(0, this.currentCardIndex), this.meta.cards.length - 1)
+        
+        this.touchmoveZero = $event.clientX
+
+        var info = {
+          touchmoveDist: this.touchmoveDist,
+          currentCardIndex: this.currentCardIndex
+        }
+        console.log("touch moving:", info)
+      }
     },
   },
   created () {

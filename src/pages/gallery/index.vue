@@ -29,11 +29,11 @@ export default {
     this.cards = [
       {
         meta:{},
-        data:{ text: "meow" }
+        data:{ img: "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1520880640853&di=539dd8329db3a0fcb23cd66a80442bda&imgtype=0&src=http%3A%2F%2Fimg5.duitang.com%2Fuploads%2Fitem%2F201411%2F18%2F20141118230656_WKeu8.jpeg" }
       },
       {
         meta:{},
-        data:{ text: "wong" }
+        data:{ img: "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1520880678186&di=569f29a975d866e6a582bbd3a5d4366a&imgtype=0&src=http%3A%2F%2Fimg5.duitang.com%2Fuploads%2Fitem%2F201410%2F27%2F20141027232616_UuR4Y.jpeg" }
       },
     ]
   }
@@ -44,6 +44,6 @@ export default {
 page, .index_wrapper {
   height: 100vh;
   width: auto;
-  /*overflow: hidden;*/
+  overflow: hidden;
 }
 </style>
