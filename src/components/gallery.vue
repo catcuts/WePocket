@@ -98,10 +98,19 @@ export default {
       clearTimeout(this.touchTimeout)
       if (this.shortTouched) {
         var touchEndTime = new Date().getTime()
-        var fingerEnd = $event.clientX
+        var fingerEnd = this.fingerLast
         var velocity = (fingerEnd - this.fingerStart) / (touchEndTime - this.touchStartTime)
-        this.currentCardIndex += velocity > 3 ? 1 : 0
+        this.currentCardIndex += (velocity > 0.5) ? -1 : (velocity < -0.5 ? 1 : 0)
+        this.currentCardIndex = Math.min(Math.max(0, this.currentCardIndex), this.meta.cards.length - 1)
         this.leftOffset = - this.currentCardIndex * windowWidth
+        var info = {
+          // fingerEnd: fingerEnd,
+          // fingerStart: this.fingerStart,
+          // touchEndTime: touchEndTime,
+          // touchStartTime: this.touchStartTime,
+          velocity: velocity
+        }
+        console.log(info)
       }
     },
     onTap ($event) {
