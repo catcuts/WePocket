@@ -31,7 +31,6 @@ export default {
 
 <style>
 .__card_wrapper {
-  padding: 10px;
-  border-radius: 5px;
+  
 }
 </style>

@@ -22,6 +22,7 @@
 import card from '@/components/card'
 
 var windowWidth = wx.getSystemInfoSync().windowWidth
+var half_windowWidth = windowWidth / 2
 
 export default {
   components: {
@@ -39,9 +40,15 @@ export default {
       touchTimeout: null,
       shortTouched: false,
       tapLock: false,
-      touchmoveZero: null,
-      touchmoveStart: null,
-      touchmoveDist: 0,
+      touchStartTime: 0,
+
+      // finger
+      fingerStart: 0,
+      fingerLast: 0,
+      LstOffsetFromStart: 0,  
+      
+      // gallery
+      leftOffset: 0,
       currentCardIndex: 0,
     }
   },
@@ -61,7 +68,7 @@ export default {
     },
     __wrapperStyle () {
       var width = 100 * this.meta.cards.length
-      var left = this.touchmoveDist
+      var left = this.leftOffset
       return `width: ${width}vw;\
               left: ${left}px;`
     },
@@ -73,7 +80,9 @@ export default {
     onTouchstart ($event) {
       console.log("touch starts")
       this.tapLock = false
-      this.touchmoveZero = this.touchmoveStart = $event.clientX
+      this.fingerLast = this.fingerStart = $event.clientX
+      this.LstOffsetFromStart = 0
+      this.touchStartTime = new Date().getTime()
       this.touchTimeout = setTimeout(() => {
         this.shortTouched = true
         this.tapLock = true
@@ -88,7 +97,11 @@ export default {
       console.log("touch ends")
       clearTimeout(this.touchTimeout)
       if (this.shortTouched) {
-        this.touchmoveDist = - this.currentCardIndex * windowWidth
+        var touchEndTime = new Date().getTime()
+        var fingerEnd = $event.clientX
+        var velocity = (fingerEnd - this.fingerStart) / (touchEndTime - this.touchStartTime)
+        this.currentCardIndex += velocity > 3 ? 1 : 0
+        this.leftOffset = - this.currentCardIndex * windowWidth
       }
     },
     onTap ($event) {
@@ -99,23 +112,43 @@ export default {
     },
     onTouchmove ($event) {
       clearTimeout(this.touchTimeout)
-      var offsetZero = $event.clientX - this.touchmoveZero
-      var offsetStart = $event.clientX - this.touchmoveStart
-      if (this.shortTouched && (offsetZero !== 0)) {
-        var direct = Math.floor(Math.abs(offsetZero) / offsetZero)
+      var fingerCurrent = $event.clientX
+      var offsetFromLast = fingerCurrent - this.fingerLast
+      var CurOffsetFromStart = Math.abs(fingerCurrent - this.fingerStart)
+      if (this.shortTouched && (offsetFromLast !== 0)) {
 
-        this.touchmoveDist += offsetZero
+        this.leftOffset += offsetFromLast
+         
+        var needSwitchCard = false
 
-        this.currentCardIndex -= direct * Math.round(Math.abs(offsetStart) / windowWidth)
-        this.currentCardIndex = Math.min(Math.max(0, this.currentCardIndex), this.meta.cards.length - 1)
-        
-        this.touchmoveZero = $event.clientX
-
-        var info = {
-          touchmoveDist: this.touchmoveDist,
-          currentCardIndex: this.currentCardIndex
+        var curTime = new Date().getTime()
+        var velocity = this.lstTime ? Math.abs(offsetFromLast) / (curTime - this.lstTime) : 0
+        if (
+          (this.LstOffsetFromStart < half_windowWidth
+          && CurOffsetFromStart >= half_windowWidth)
+          ||
+          (this.LstOffsetFromStart >= half_windowWidth
+          && CurOffsetFromStart < half_windowWidth)
+          ) {
+          needSwitchCard = true
         }
-        console.log("touch moving:", info)
+
+        if (needSwitchCard) {
+          this.currentCardIndex += (fingerCurrent - this.fingerStart > 0 ? -1 : 1)
+          this.currentCardIndex = Math.min(Math.max(0, this.currentCardIndex), this.meta.cards.length - 1)
+        }
+        
+        // var info = {
+        //   velocity: velocity,
+        //   needSwitchCard: needSwitchCard,
+        //   currentCardIndex: this.currentCardIndex
+        // }
+
+        this.lstTime = curTime
+        this.fingerLast = fingerCurrent
+        this.LstOffsetFromStart = CurOffsetFromStart
+
+        // console.log("touch moving:", info)
       }
     },
   },
@@ -146,6 +179,8 @@ export default {
   .__gallery_wrapper.short_touched > .__card_wrapper {
     animation: zoom_in 0.12s steps(50, end);
     transform: scale(0.8);
+    border-radius: 10px;
+    overflow: hidden;
   }
 
 @keyframes zoom_in {
